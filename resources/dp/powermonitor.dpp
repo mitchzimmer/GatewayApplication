@@ -1,7 +1,7 @@
 #Deployment Plugin Project File
-#Mon Feb 06 21:32:22 CST 2017
-build.ant.name=<.>\\resources\\dp\\heater2_build.xml
-build.dp.file=<.>\\resources\\dp\\heater2.dp
+#Mon Feb 06 23:07:57 CST 2017
+build.ant.name=<.>\\resources\\dp\\powermonitor_build.xml
+build.dp.file=<.>\\resources\\dp\\powermonitor.dp
 build.location=
 bundles.0.bundle_path=<.>\\.project
 bundles.0.customizer=false
@@ -14,7 +14,7 @@ bundles.count=1
 certificates.count=0
 general.signbundles=false
 headers.other.headers=
-headers.symbolic.name=heater2
+headers.symbolic.name=powermonitor
 headers.version=1.0.0
 resources.count=0
 
