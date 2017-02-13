@@ -1,19 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Eurotech
- *******************************************************************************/
-package org.eclipse.kura.demo.heater;
+package capstone.powermonitor;
 
-import java.util.Date;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -29,21 +16,23 @@ import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Heater implements ConfigurableComponent, CloudClientListener  
+public class PowerMonitor implements ConfigurableComponent, CloudClientListener  
 {	
-	private static final Logger s_logger = LoggerFactory.getLogger(Heater.class);
+	private static final Logger s_logger = LoggerFactory.getLogger(PowerMonitor.class);
 	
 	// Cloud Application identifier
-	private static final String APP_ID = "heater";
+	private static final String APP_ID = "powermonitor";
 
 	// Publishing Property Names
 	private static final String   PUBLISH_RETAIN_PROP_NAME = "publish.retain";
 	private static final String   SEMANTIC_TOPIC_PROP_NAME = "publish.semanticTopic";
+//	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
 	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
 	
 	private ScheduledExecutorService    m_worker;
+	private ScheduledFuture<?>          m_handle;
 	
 	private Map<String, Object>         m_properties;
 	
@@ -53,7 +42,7 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 	//
 	// ----------------------------------------------------------------
 	
-	public Heater() 
+	public PowerMonitor() 
 	{
 		super();
 		m_worker = Executors.newSingleThreadScheduledExecutor();
@@ -76,7 +65,7 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 
 	protected void activate(ComponentContext componentContext, Map<String,Object> properties) 
 	{
-		s_logger.info("Activating Heater...");
+		s_logger.info("Activating Power Monitor...");
 		
 		m_properties = properties;
 		for (String s : properties.keySet()) {
@@ -99,13 +88,13 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 			s_logger.error("Error during component activation", e);
 			throw new ComponentException(e);
 		}
-		s_logger.info("Activating Heater... Done.");
+		s_logger.info("Activating Power Monitor... Done.");
 	}
 	
 	
 	protected void deactivate(ComponentContext componentContext) 
 	{
-		s_logger.debug("Deactivating Heater...");
+		s_logger.debug("Deactivating Power Monitor...");
 
 		// shutting down the worker and cleaning up the properties
 		m_worker.shutdown();
@@ -114,13 +103,13 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
 		m_cloudClient.release();
 
-		s_logger.debug("Deactivating Heater... Done.");
+		s_logger.debug("Deactivating Power Monitor... Done.");
 	}	
 	
 	
 	public void updated(Map<String,Object> properties)
 	{
-		s_logger.info("Updated Heater...");
+		s_logger.info("Updated Power Monitor...");
 
 		// store the properties received
 		m_properties = properties;
@@ -130,7 +119,7 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 		
 		// try to kick off a new job
 		doUpdate(true);
-		s_logger.info("Updated Heater... Done.");
+		s_logger.info("Updated Power Monitor... Done.");
 	}
 	
 	
@@ -195,6 +184,21 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 		String  topic2  = (String) m_properties.get(SEMANTIC_TOPIC_PROP_NAME);
 		s_logger.info("Update Bool: " + topic);
 		s_logger.info("Update Message: " + topic2);
+		
+//		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
+//			s_logger.info("Update PowerMonitor - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
+//			return;
+//		}
+//		
+//		// schedule a new worker based on the properties of the service
+//		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
+//		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
+//			@Override
+//			public void run() {
+//				Thread.currentThread().setName(getClass().getSimpleName());
+//				doPublish();
+//			}
+//		}, 0, pubrate * 30, TimeUnit.SECONDS); //FIXME: Remove multiplier of *30 to pubrate
 	}
 	
 	
@@ -207,6 +211,6 @@ public class Heater implements ConfigurableComponent, CloudClientListener
 //		String  topic  = (String) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
 		
 //		s_logger.info("Update Message: " + topic);
-
+		s_logger.info("UPDATE: Sending Fake Data to the cloud (not really)");
 	}
 }

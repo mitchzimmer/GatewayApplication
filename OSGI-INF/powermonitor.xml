@@ -13,19 +13,19 @@
 
 -->
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
-    name="org.eclipse.kura.demo.heater.Heater"
+    name="capstone.powermonitor.PowerMonitor"
     activate="activate" 
     deactivate="deactivate" 
     modified="updated" 
     enabled="true"
     immediate="true"
     configuration-policy="require">
-	<implementation class="org.eclipse.kura.demo.heater.Heater"/>
+	<implementation class="capstone.powermonitor.PowerMonitor"/>
 
    <!-- If the component is configurable through the Kura ConfigurationService, it must expose a Service. -->
-   <property name="service.pid" type="String" value="org.eclipse.kura.demo.heater.Heater"/>
+   <property name="service.pid" type="String" value="capstone.powermonitor.PowerMonitor"/>
    <service>
-       <provide interface="org.eclipse.kura.demo.heater.Heater"/>
+       <provide interface="capstone.powermonitor.PowerMonitor"/>
    </service>
    
    <reference name="CloudService"

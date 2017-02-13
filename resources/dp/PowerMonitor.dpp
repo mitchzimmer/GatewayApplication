@@ -1,20 +1,20 @@
 #Deployment Plugin Project File
-#Mon Feb 06 23:07:57 CST 2017
-build.ant.name=<.>\\resources\\dp\\powermonitor_build.xml
-build.dp.file=<.>\\resources\\dp\\powermonitor.dp
+#Mon Feb 13 12:55:47 CST 2017
+build.ant.name=<.>\\resources\\dp\\PowerMonitor_build.xml
+build.dp.file=<.>\\resources\\dp\\PowerMonitor.dp
 build.location=
 bundles.0.bundle_path=<.>\\.project
 bundles.0.customizer=false
 bundles.0.headers.count=0
 bundles.0.missing=false
-bundles.0.name=bundles/org.eclipse.kura.demo.heater.jar
-bundles.0.symbolic_name=org.eclipse.kura.demo.heater;singleton\:\=true
+bundles.0.name=bundles/capstone.powermonitor.PowerMonitor.jar
+bundles.0.symbolic_name=capstone.powermonitor.PowerMonitor;singleton\:\=true
 bundles.0.version=1.0.2.qualifier
 bundles.count=1
 certificates.count=0
 general.signbundles=false
 headers.other.headers=
-headers.symbolic.name=powermonitor
+headers.symbolic.name=PowerMonitor
 headers.version=1.0.0
 resources.count=0
 
