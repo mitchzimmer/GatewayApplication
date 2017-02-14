@@ -24,9 +24,6 @@
 
    <!-- If the component is configurable through the Kura ConfigurationService, it must expose a Service. -->
    <property name="service.pid" type="String" value="capstone.powermonitor.PowerMonitor"/>
-   <service>
-       <provide interface="capstone.powermonitor.PowerMonitor"/>
-   </service>
    
    <reference name="CloudService"
               policy="static"
@@ -34,4 +31,7 @@
               unbind="unsetCloudService"       
               cardinality="1..1" 
               interface="org.eclipse.kura.cloud.CloudService"/>
+   <service>
+      <provide interface="capstone.powermonitor.PowerMonitor"/>
+   </service>
 </scr:component>

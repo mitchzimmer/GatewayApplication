@@ -24,9 +24,9 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private static final String APP_ID = "powermonitor";
 
 	// Publishing Property Names
-	private static final String   PUBLISH_RETAIN_PROP_NAME = "publish.retain";
-	private static final String   SEMANTIC_TOPIC_PROP_NAME = "publish.semanticTopic";
-//	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
+//	private static final String   PUBLISH_RETAIN_PROP_NAME = "publish.retain";
+//	private static final String   SEMANTIC_TOPIC_PROP_NAME = "publish.semanticTopic";
+	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
 	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
@@ -180,25 +180,25 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private void doUpdate(boolean onUpdate) 
 	{
 	
-		Boolean  topic  = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
-		String  topic2  = (String) m_properties.get(SEMANTIC_TOPIC_PROP_NAME);
-		s_logger.info("Update Bool: " + topic);
-		s_logger.info("Update Message: " + topic2);
+//		Boolean  topic  = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
+//		String  topic2  = (String) m_properties.get(SEMANTIC_TOPIC_PROP_NAME);
+//		s_logger.info("Update Bool: " + topic);
+//		s_logger.info("Update Message: " + topic2);
 		
-//		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
-//			s_logger.info("Update PowerMonitor - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
-//			return;
-//		}
-//		
-//		// schedule a new worker based on the properties of the service
-//		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
-//		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
-//			@Override
-//			public void run() {
-//				Thread.currentThread().setName(getClass().getSimpleName());
-//				doPublish();
-//			}
-//		}, 0, pubrate * 30, TimeUnit.SECONDS); //FIXME: Remove multiplier of *30 to pubrate
+		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
+			s_logger.info("Update PowerMonitor - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
+			return;
+		}
+		
+		// schedule a new worker based on the properties of the service
+		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
+		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
+			@Override
+			public void run() {
+				Thread.currentThread().setName(getClass().getSimpleName());
+				doPublish();
+			}
+		}, 0, pubrate * 30, TimeUnit.SECONDS); //FIXME: Remove multiplier of *30 to pubrate
 	}
 	
 	
