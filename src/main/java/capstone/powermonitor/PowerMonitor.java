@@ -1,9 +1,11 @@
 package capstone.powermonitor;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.cloud.CloudClient;
@@ -28,13 +30,19 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 //	private static final String   SEMANTIC_TOPIC_PROP_NAME = "publish.semanticTopic";
 	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
 	
+//	private static final String   POWER_INITIAL_PROP_NAME   = "metric.power.initial";
+//	private static final String   POWER_INCREMENT_PROP_NAME = "metric.power.increment";
+	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
 	
 	private ScheduledExecutorService    m_worker;
 	private ScheduledFuture<?>          m_handle;
 	
+//	private float       				m_power;
 	private Map<String, Object>         m_properties;
+	
+	
 	
 	// ----------------------------------------------------------------
 	//
@@ -208,9 +216,35 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private void doPublish() 
 	{				
 		// fetch the publishing configuration from the publishing properties
-//		String  topic  = (String) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
+		String  topic  = "rg1020";
+		String  topic2  = "device1";
 		
-//		s_logger.info("Update Message: " + topic);
-		s_logger.info("UPDATE: Sending Fake Data to the cloud (not really)");
+		// Allocate a new payload
+		KuraPayload payload = new KuraPayload();
+		
+		// Timestamp the message
+		payload.setTimestamp(new Date());
+		
+		double max = 10.0;
+		double min = 0.0;
+		Double current = ThreadLocalRandom.current().nextDouble(min, max);;
+		Double voltage = ThreadLocalRandom.current().nextDouble(min, max);;
+		Double power = voltage * current;
+
+		
+		// Add the temperature as a metric to the payload
+		payload.addMetric("Voltage", voltage);
+		payload.addMetric("Current", current);
+		payload.addMetric("Power",  power);
+		
+		// Publish the message
+		try {
+			m_cloudClient.publish(topic, payload, 0, false);
+			s_logger.info("Published to {} message: {}", topic, payload);
+		} 
+		catch (Exception e) {
+			s_logger.error("Cannot publish topic: "+ topic, e);
+		}
+		
 	}
 }
