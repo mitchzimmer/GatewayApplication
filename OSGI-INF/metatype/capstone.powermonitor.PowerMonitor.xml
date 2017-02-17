@@ -30,7 +30,7 @@
             required="true"
             default="2"
             min="1" 
-            description="Default message publishing rate in seconds (min 1)."/>
+            description="Default message publishing rate in minutes (min 1)."/>
             
     </OCD>
     <Designate pid="capstone.powermonitor.PowerMonitor">

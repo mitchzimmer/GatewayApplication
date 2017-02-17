@@ -179,11 +179,11 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	 */
 	private void doUpdate(boolean onUpdate) 
 	{
-	
-//		Boolean  topic  = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
-//		String  topic2  = (String) m_properties.get(SEMANTIC_TOPIC_PROP_NAME);
-//		s_logger.info("Update Bool: " + topic);
-//		s_logger.info("Update Message: " + topic2);
+		
+		// cancel a current worker handle if one if active
+		if (m_handle != null) {
+			m_handle.cancel(true);
+		}
 		
 		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
 			s_logger.info("Update PowerMonitor - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
@@ -198,7 +198,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 				Thread.currentThread().setName(getClass().getSimpleName());
 				doPublish();
 			}
-		}, 0, pubrate * 30, TimeUnit.SECONDS); //FIXME: Remove multiplier of *30 to pubrate
+		}, 0, pubrate, TimeUnit.MINUTES); //FIXME: Remove multiplier of *30 to pubrate
 	}
 	
 	
