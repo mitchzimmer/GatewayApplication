@@ -216,8 +216,9 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private void doPublish() 
 	{				
 		// fetch the publishing configuration from the publishing properties
-		String  topic  = "rg1020";
-		String  topic2  = "device1";
+		String gatewayName = "rg1020";
+		String deviceName = "device1";
+		String  topic  = gatewayName + "/" + deviceName;
 		
 		// Allocate a new payload
 		KuraPayload payload = new KuraPayload();
