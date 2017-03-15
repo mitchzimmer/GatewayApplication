@@ -26,12 +26,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private static final String APP_ID = "PeakMonitor";
 
 	// Publishing Property Names
-//	private static final String   PUBLISH_RETAIN_PROP_NAME = "publish.retain";
-//	private static final String   SEMANTIC_TOPIC_PROP_NAME = "publish.semanticTopic";
 	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
-	
-//	private static final String   POWER_INITIAL_PROP_NAME   = "metric.power.initial";
-//	private static final String   POWER_INCREMENT_PROP_NAME = "metric.power.increment";
 	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
@@ -39,9 +34,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private ScheduledExecutorService    m_worker;
 	private ScheduledFuture<?>          m_handle;
 	
-//	private float       				m_power;
 	private Map<String, Object>         m_properties;
-	
 	
 	
 	// ----------------------------------------------------------------
@@ -73,7 +66,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 
 	protected void activate(ComponentContext componentContext, Map<String,Object> properties) 
 	{
-		s_logger.info("Activating Power Monitor...");
+		s_logger.info("Activating " + APP_ID + "...");
 		
 		m_properties = properties;
 		for (String s : properties.keySet()) {
@@ -96,13 +89,13 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 			s_logger.error("Error during component activation", e);
 			throw new ComponentException(e);
 		}
-		s_logger.info("Activating Power Monitor... Done.");
+		s_logger.info("Activating " + APP_ID + " ... Done.");
 	}
 	
 	
 	protected void deactivate(ComponentContext componentContext) 
 	{
-		s_logger.debug("Deactivating Power Monitor...");
+		s_logger.debug("Deactivating " + APP_ID + "...");
 
 		// shutting down the worker and cleaning up the properties
 		m_worker.shutdown();
@@ -111,13 +104,13 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
 		m_cloudClient.release();
 
-		s_logger.debug("Deactivating Power Monitor... Done.");
+		s_logger.debug("Deactivating " + APP_ID + "... Done.");
 	}	
 	
 	
 	public void updated(Map<String,Object> properties)
 	{
-		s_logger.info("Updated Power Monitor...");
+		s_logger.info("Updated " + APP_ID + "...");
 
 		// store the properties received
 		m_properties = properties;
@@ -127,7 +120,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 		
 		// try to kick off a new job
 		doUpdate(true);
-		s_logger.info("Updated Power Monitor... Done.");
+		s_logger.info("Updated " + APP_ID + "... Done.");
 	}
 	
 	
@@ -194,7 +187,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 		}
 		
 		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
-			s_logger.info("Update PowerMonitor - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
+			s_logger.info("Update " + APP_ID + " - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
 			return;
 		}
 		
