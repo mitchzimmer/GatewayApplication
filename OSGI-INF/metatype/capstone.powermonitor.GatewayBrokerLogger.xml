@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+    <OCD id="capstone.powermonitor.GatewayBrokerLogger"
+         name="GatewayBrokerLogger" 
+         description="This is a simulator for a gateway logging application. Its configuration options will be passed down to... ">
+        
+        <Icon resource="OSGI-INF/gatewaybroker.png" size="32"/>
+            
+         <AD id="logging.mqttTopic"  
+            name="logging.mqttTopic"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="gateway/#" 
+            description="Default mqtt topic to log for."/>
+            
+    </OCD>
+    <Designate pid="capstone.powermonitor.GatewayBrokerLogger">
+        <Object ocdref="capstone.powermonitor.GatewayBrokerLogger"/>
+    </Designate>
+</MetaData>
