@@ -1,9 +1,9 @@
 #Deployment Plugin Project File
-#Mon Feb 13 21:44:28 CST 2017
+#Wed Mar 15 14:12:54 CDT 2017
 build.ant.name=<.>\\resources\\dp\\PowerMonitor_build.xml
 build.dp.file=<.>\\resources\\dp\\PowerMonitor.dp
 build.location=
-bundles.0.bundle_path=<.>\\.project
+bundles.0.bundle_path=<.>/.project
 bundles.0.customizer=false
 bundles.0.headers.count=0
 bundles.0.missing=false

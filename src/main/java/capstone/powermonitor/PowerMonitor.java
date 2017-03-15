@@ -23,7 +23,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private static final Logger s_logger = LoggerFactory.getLogger(PowerMonitor.class);
 	
 	// Cloud Application identifier
-	private static final String APP_ID = "powermonitor";
+	private static final String APP_ID = "PeakMonitor";
 
 	// Publishing Property Names
 //	private static final String   PUBLISH_RETAIN_PROP_NAME = "publish.retain";
@@ -216,35 +216,51 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private void doPublish() 
 	{				
 		// fetch the publishing configuration from the publishing properties
-		String gatewayName = "rg1020";
-		String deviceName = "device1";
-		String  topic  = gatewayName + "/" + deviceName;
+		String deviceMac = "C4-F9-D5-1D-45-A4";
+		String  topic  = deviceMac;
+		
+		String deviceMac2 = "0A-2C-26-DF-A7-24";
+		String  topic2  = deviceMac2;
 		
 		// Allocate a new payload
 		KuraPayload payload = new KuraPayload();
+		KuraPayload payload2 = new KuraPayload();
 		
 		// Timestamp the message
 		payload.setTimestamp(new Date());
-		
+		payload2.setTimestamp(new Date());
+
+		//Generate Random Current and Voltage vars to get our Power
 		double max = 10.0;
 		double min = 0.0;
+		
 		Double current = ThreadLocalRandom.current().nextDouble(min, max);;
 		Double voltage = ThreadLocalRandom.current().nextDouble(min, max);;
 		Double power = voltage * current;
 
+		Double current2 = ThreadLocalRandom.current().nextDouble(min, max);;
+		Double voltage2 = ThreadLocalRandom.current().nextDouble(min, max);;
+		Double power2 = voltage * current;
 		
-		// Add the temperature as a metric to the payload
+		// Add the Voltage, Current, and Power as a metric to the payload
 		payload.addMetric("Voltage", voltage);
 		payload.addMetric("Current", current);
 		payload.addMetric("Power",  power);
+		
+		payload2.addMetric("Voltage", voltage2);
+		payload2.addMetric("Current", current2);
+		payload2.addMetric("Power",  power2);
 		
 		// Publish the message
 		try {
 			m_cloudClient.publish(topic, payload, 0, false);
 			s_logger.info("Published to {} message: {}", topic, payload);
+			
+			m_cloudClient.publish(topic2, payload2, 0, false);
+			s_logger.info("Published to {} message: {}", topic2, payload2);
 		} 
 		catch (Exception e) {
-			s_logger.error("Cannot publish topic: "+ topic, e);
+			s_logger.error("Cannot publish topic: "+ topic + " AND/OR " + topic2, e);
 		}
 		
 	}
