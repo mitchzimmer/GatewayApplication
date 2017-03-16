@@ -26,6 +26,7 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	
 	private Map<String, Object>         m_properties;
 	private String 						broker;
+	private String						topic;
 	
 	
 	// ----------------------------------------------------------------
@@ -54,7 +55,7 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 			s_logger.info("Activate - "+s+": "+properties.get(s));
 		}
 		
-		String topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
+		topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
 		broker = "tcp://127.0.0.1:1883";
 		
 		// get the mqtt client for this application
@@ -95,7 +96,7 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 
 		try {
 			s_logger.info("Unsubscribe mqtt client ");
-			mqttClient.unsubscribe("#");
+			mqttClient.unsubscribe(topic);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -106,7 +107,7 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 			s_logger.info("Update - "+s+": "+properties.get(s));
 		}
 		
-		String topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
+		topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
 
 		try {
 			s_logger.info("subscribe mqtt client to: " + topic);
