@@ -95,7 +95,7 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 		s_logger.info("Updated " + APP_ID + "...");
 
 		try {
-			s_logger.info("Unsubscribe mqtt client ");
+			s_logger.info("unsubscribe mqtt client from: " + topic);
 			mqttClient.unsubscribe(topic);
 		} catch (MqttException e) {
 			e.printStackTrace();
