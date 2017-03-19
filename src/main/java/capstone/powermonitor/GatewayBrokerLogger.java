@@ -1,6 +1,10 @@
 package capstone.powermonitor;
 
+import java.io.StringReader;
 import java.util.Map;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.osgi.service.component.ComponentContext;
@@ -135,6 +139,56 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		s_logger.info("Recieved MQTT -- Topic: "+ topic +" Message: " + message);   
+		
+		
+		s_logger.info("parsing xml");   
+		
+		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+		StringReader reader = new StringReader(message.toString());
+        XMLStreamReader streamReader = inputFactory.createXMLStreamReader(reader);
+        
+        //<payload>
+        //	<metrics>
+        //		<metric>
+        //			<name>Power</name>
+        //			<type>double</type>
+        //			<value>3.0347696184267443</value>
+        //		</metric>
+        //	</metrics>
+        //</payload>
+                
+        streamReader.nextTag(); // Advance to "payload" element
+        streamReader.nextTag(); // Advance to "metrics" element
+        streamReader.nextTag(); // Advance to "metric" element
+
+        int metrics = 0;
+        while (streamReader.hasNext()) {
+            if (streamReader.isStartElement()) {
+                switch (streamReader.getLocalName()) {
+                case "name": {
+                	s_logger.info("name : ");
+                	s_logger.info(streamReader.getElementText());
+                    break;
+                }
+                case "type": {
+                	s_logger.info("type : ");
+                	s_logger.info(streamReader.getElementText());
+                    break;
+                }
+                case "value": {
+                	s_logger.info("value : ");
+                	s_logger.info(streamReader.getElementText());
+                    break;
+                }
+                case "metric" : {
+                    metrics ++;
+                }
+                }
+            }
+            streamReader.next();
+        }
+        s_logger.info(metrics + " metrics");
+
 	}
 
 	@Override
