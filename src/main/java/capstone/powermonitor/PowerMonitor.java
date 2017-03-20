@@ -1,5 +1,6 @@
 package capstone.powermonitor;
 
+import java.io.StringReader;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -8,18 +9,25 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
 import org.eclipse.kura.cloud.CloudClient;
 import org.eclipse.kura.cloud.CloudClientListener;
 import org.eclipse.kura.cloud.CloudService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.message.KuraPayload;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PowerMonitor implements ConfigurableComponent, CloudClientListener  
-{	
+public class PowerMonitor implements ConfigurableComponent, CloudClientListener, MqttCallback {	
 	private static final Logger s_logger = LoggerFactory.getLogger(PowerMonitor.class);
 	
 	// Cloud Application identifier
@@ -34,7 +42,14 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	private ScheduledExecutorService    m_worker;
 	private ScheduledFuture<?>          m_handle;
 	
+	// Publishing Property Names
+	private static final String   MQTT_TOPIC_PROP_NAME   = "logging.mqttTopic";
+		
+	private MqttClient 					mqttClient;
+	
 	private Map<String, Object>         m_properties;
+	private String 						broker;
+	private String						topic;
 	
 	
 	// ----------------------------------------------------------------
@@ -68,12 +83,13 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	{
 		s_logger.info("Activating " + APP_ID + "...");
 		
+		//getting properties
 		m_properties = properties;
 		for (String s : properties.keySet()) {
 			s_logger.info("Activate - "+s+": "+properties.get(s));
 		}
 		
-		// get the mqtt client for this application
+		// get the mqtt CloudApplicationClient for this application
 		try  {
 			
 			// Acquire a Cloud Application Client for this Application 
@@ -89,6 +105,24 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 			s_logger.error("Error during component activation", e);
 			throw new ComponentException(e);
 		}
+		
+		
+		// get the mqtt GatewayBrokerClient for this application
+		topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
+		broker = "tcp://127.0.0.1:1883";
+		
+		s_logger.info("Connecting MqttClient for {}...", APP_ID);
+		try {
+	        mqttClient = new MqttClient(broker, APP_ID);
+	        mqttClient.connect();
+	        mqttClient.setCallback(this);
+	        
+			s_logger.info("subscribe mqtt client to: " + topic);
+	        mqttClient.subscribe(topic);
+	    } catch (MqttException e) {
+	        e.printStackTrace();
+	    }
+		
 		s_logger.info("Activating " + APP_ID + " ... Done.");
 	}
 	
@@ -103,6 +137,14 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 		// Releasing the CloudApplicationClient
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
 		m_cloudClient.release();
+		
+		// Releasing the GatewayBrokerClient
+		s_logger.info("Releasing MqttClient for {}...", APP_ID);
+		try {
+			mqttClient.disconnect();
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}
 
 		s_logger.debug("Deactivating " + APP_ID + "... Done.");
 	}	
@@ -111,11 +153,29 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	public void updated(Map<String,Object> properties)
 	{
 		s_logger.info("Updated " + APP_ID + "...");
-
+		
+		//unsubscribe GatewayClientBroker
+		try {
+			s_logger.info("unsubscribe mqtt client from: " + topic);
+			mqttClient.unsubscribe(topic);
+		} catch (MqttException e) {
+			e.printStackTrace();
+		}
+		
 		// store the properties received
 		m_properties = properties;
 		for (String s : properties.keySet()) {
 			s_logger.info("Update - "+s+": "+properties.get(s));
+		}
+		
+		//Get new topic and subscribe GatewayClientBroker
+		topic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
+
+		try {
+			s_logger.info("subscribe mqtt client to: " + topic);
+			mqttClient.subscribe(topic);
+		} catch (MqttException e) {
+			e.printStackTrace();
 		}
 		
 		// try to kick off a new job
@@ -132,41 +192,39 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 	// ----------------------------------------------------------------
 	
 	@Override
-	public void onControlMessageArrived(String deviceId, String appTopic,
-			KuraPayload msg, int qos, boolean retain) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onControlMessageArrived(String deviceId, String appTopic, KuraPayload msg, int qos, boolean retain) {}
 
 	@Override
-	public void onMessageArrived(String deviceId, String appTopic,
-			KuraPayload msg, int qos, boolean retain) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onMessageArrived(String deviceId, String appTopic, KuraPayload msg, int qos, boolean retain) {}
 
 	@Override
-	public void onConnectionLost() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onConnectionLost() {}
 
 	@Override
-	public void onConnectionEstablished() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onConnectionEstablished() {}
 
 	@Override
-	public void onMessageConfirmed(int messageId, String appTopic) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onMessageConfirmed(int messageId, String appTopic) {}
 
 	@Override
-	public void onMessagePublished(int messageId, String appTopic) {
-		// TODO Auto-generated method stub
-		
+	public void onMessagePublished(int messageId, String appTopic) {}
+	
+	// ----------------------------------------------------------------
+	//
+	//   MQTT Paho Application Callback Methods
+	//
+	// ----------------------------------------------------------------
+	
+	@Override
+	public void connectionLost(Throwable cause) {}
+
+	@Override
+	public void deliveryComplete(IMqttDeliveryToken token) {}
+
+	@Override
+	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		s_logger.info("Recieved MQTT -- Topic: "+ topic +" Message: " + message);   
+		doPublish(message);
 	}
 	
 	// ----------------------------------------------------------------
@@ -193,67 +251,130 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener
 		
 		// schedule a new worker based on the properties of the service
 		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
-		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
-			@Override
-			public void run() {
-				Thread.currentThread().setName(getClass().getSimpleName());
-				doPublish();
-			}
-		}, 0, pubrate, TimeUnit.MINUTES); //FIXME: Remove multiplier of *30 to pubrate
+		//TODO: Add this in to only accept live data every so many minutes
+		
+//		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
+//			@Override
+//			public void run() {
+//				Thread.currentThread().setName(getClass().getSimpleName());
+//				doPublish();
+//			}
+//		}, 0, pubrate, TimeUnit.MINUTES);
 	}
 	
 	
 	/**
 	 * Called at the configured rate to publish the next temperature measurement.
 	 */
-	private void doPublish() 
+	private void doPublish(MqttMessage message) 
 	{				
-		// fetch the publishing configuration from the publishing properties
-		String deviceMac = "C4-F9-D5-1D-45-A4";
-		String  topic  = deviceMac;
-		
-		String deviceMac2 = "0A-2C-26-DF-A7-24";
-		String  topic2  = deviceMac2;
-		
-		// Allocate a new payload
 		KuraPayload payload = new KuraPayload();
-		KuraPayload payload2 = new KuraPayload();
-		
-		// Timestamp the message
-		payload.setTimestamp(new Date());
-		payload2.setTimestamp(new Date());
+        payload.setTimestamp(new Date());
+        //XML EXAMPLE
+        //<payload>
+        //	<metrics>
+        //		<metric>
+        //			<name>Power</name>
+        //			<type>double</type>
+        //			<value>3.0347696184267443</value>
+        //		</metric>
+        //	</metrics>
+        //</payload>
 
-		//Generate Random Current and Voltage vars to get our Power
-		double max = 10.0;
-		double min = 0.0;
-		
-		Double current = ThreadLocalRandom.current().nextDouble(min, max);;
-		Double voltage = ThreadLocalRandom.current().nextDouble(min, max);;
-		Double power = voltage * current;
-
-		Double current2 = ThreadLocalRandom.current().nextDouble(min, max);;
-		Double voltage2 = ThreadLocalRandom.current().nextDouble(min, max);;
-		Double power2 = voltage * current;
-		
-		// Add the Voltage, Current, and Power as a metric to the payload
-		payload.addMetric("Voltage", voltage);
-		payload.addMetric("Current", current);
-		payload.addMetric("Power",  power);
-		
-		payload2.addMetric("Voltage", voltage2);
-		payload2.addMetric("Current", current2);
-		payload2.addMetric("Power",  power2);
+		//Parsing out XML into KuraPayload
+		try{		
+			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+			StringReader reader = new StringReader(message.toString());
+	        XMLStreamReader streamReader = inputFactory.createXMLStreamReader(reader);
+	                
+	        streamReader.nextTag(); // Advance to "payload" element
+	        streamReader.nextTag(); // Advance to "metrics" element
+	        streamReader.nextTag(); // Advance to "metric" element
+	
+	        int metricsNumber = 0;
+	       	String name = new String();
+	    	String typename = new String();
+	    	String value = new String();
+	        while (streamReader.hasNext()) {
+	        	//Checking Start of Element
+	            if (streamReader.isStartElement()) {
+	                switch (streamReader.getLocalName()) {
+		                case "name": {
+		                	name = streamReader.getElementText();
+		                    break;
+		                }
+		                case "type": {
+		                	typename = streamReader.getElementText();
+		                	break;
+		                }
+		                case "value": {
+		                	value = streamReader.getElementText();
+		                    break;
+		                }
+		                case "metric" : {
+		                	metricsNumber ++;
+		                	break;
+		                }
+	                }
+	            }
+	        	//Checking End of Element
+	            if(streamReader.isEndElement()){
+	            	switch (streamReader.getLocalName()) {
+		                case "metric" : {
+	
+		                	//Dont know a better way to do this...
+		                	//valid metric types: string, double, int, float, long, boolean, base64Binary
+		                    switch (typename) {
+		                    	case "string": {
+		                    		payload.addMetric(name, (String)value);
+		                    		break;
+		                        }
+		                    	case "double": {
+		                    		payload.addMetric(name, Double.parseDouble(value));
+		                            break;
+		                        }
+		                    	case "int": {
+		                    		payload.addMetric(name, Integer.parseInt(value));
+		                    		break;
+		                        }
+		                    	case "float": {
+		                    		payload.addMetric(name, Float.parseFloat(value));
+		                            break;
+		                        }
+		                    	case "long": {
+		                    		payload.addMetric(name, Long.parseLong(value));
+		                            break;
+		                        }
+		                    	case "boolean": {
+		                    		payload.addMetric(name, Boolean.parseBoolean(value));
+		                    		break;
+		                        }
+		                    	case "base64Binary": {
+		                        	//not sure here
+		                            break;
+		                    	}
+		                    }
+		                    break;
+		                }
+	            	}
+	            }
+	            streamReader.next();
+	        }
+	        
+	        s_logger.info(metricsNumber + " metrics");
+	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	        
+		}
+		catch(Exception e){
+			s_logger.info(e.toString());
+		}
 		
 		// Publish the message
 		try {
 			m_cloudClient.publish(topic, payload, 0, false);
-			s_logger.info("Published to {} message: {}", topic, payload);
-			
-			m_cloudClient.publish(topic2, payload2, 0, false);
-			s_logger.info("Published to {} message: {}", topic2, payload2);
+			s_logger.info("Published to {} message: {}", topic, message);
 		} 
 		catch (Exception e) {
-			s_logger.error("Cannot publish topic: "+ topic + " AND/OR " + topic2, e);
+			s_logger.error("Cannot publish topic: "+ topic, e);
 		}
 		
 	}

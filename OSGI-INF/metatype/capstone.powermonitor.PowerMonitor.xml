@@ -5,24 +5,15 @@
          description="This is a simulator for an power monitor gateway application. Its configuration options will be passed down to... ">
         
         <Icon resource="OSGI-INF/powermonitor.png" size="32"/>
-
-		 <!--
-          <AD id="publish.retain"  
-            name="publish.retain"
-            type="Boolean"
-            cardinality="0" 
-            required="true"
-            default="false" 
-            description="Default retaing flag for the published messages."/>
-            
-         <AD id="publish.semanticTopic"  
-            name="publish.semanticTopic"
+		
+		<AD id="logging.mqttTopic"  
+            name="logging.mqttTopic"
             type="String"
             cardinality="0" 
             required="true"
-            default="data" 
-            description="Default semantic topic to publish the messages to."/>
-        -->
+            default="gateway/#" 
+            description="Default mqtt topic to subsribe to. (Listens to devices that send XML messages on this topic)"/>
+		 
          <AD id="publish.rate"  
             name="publish.rate"
             type="Integer"
