@@ -1,4 +1,4 @@
-package capstone.powermonitor;
+package capstone.peakmonitor;
 
 import java.io.StringReader;
 import java.util.Date;
@@ -27,8 +27,8 @@ import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PowerMonitor implements ConfigurableComponent, CloudClientListener, MqttCallback {	
-	private static final Logger s_logger = LoggerFactory.getLogger(PowerMonitor.class);
+public class PeakMonitor implements ConfigurableComponent, CloudClientListener, MqttCallback {	
+	private static final Logger s_logger = LoggerFactory.getLogger(PeakMonitor.class);
 	
 	// Cloud Application identifier
 	private static final String APP_ID = "PeakMonitor";
@@ -58,7 +58,7 @@ public class PowerMonitor implements ConfigurableComponent, CloudClientListener,
 	//
 	// ----------------------------------------------------------------
 	
-	public PowerMonitor() 
+	public PeakMonitor() 
 	{
 		super();
 		m_worker = Executors.newSingleThreadScheduledExecutor();

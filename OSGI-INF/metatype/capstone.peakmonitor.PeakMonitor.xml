@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
-    <OCD id="capstone.powermonitor.PowerMonitor"
-         name="PowerMonitor" 
-         description="This is a simulator for an power monitor gateway application. Its configuration options will be passed down to... ">
+    <OCD id="capstone.peakmonitor.PeakMonitor"
+         name="Peak Monitor" 
+         description="This is the peak monitor gateway application. Its configuration options will be passed down to... ">
         
-        <Icon resource="OSGI-INF/powermonitor.png" size="32"/>
+        <Icon resource="OSGI-INF/peakmonitor.png" size="32"/>
 		
 		<AD id="logging.mqttTopic"  
             name="logging.mqttTopic"
@@ -24,7 +24,7 @@
             description="Default message publishing rate in minutes (min 1)."/>
             
     </OCD>
-    <Designate pid="capstone.powermonitor.PowerMonitor">
-        <Object ocdref="capstone.powermonitor.PowerMonitor"/>
+    <Designate pid="capstone.peakmonitor.PeakMonitor">
+        <Object ocdref="capstone.peakmonitor.PeakMonitor"/>
     </Designate>
 </MetaData>

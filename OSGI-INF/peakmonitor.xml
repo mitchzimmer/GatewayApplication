@@ -13,17 +13,17 @@
 
 -->
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
-    name="capstone.powermonitor.PowerMonitor"
+    name="capstone.peakmonitor.PeakMonitor"
     activate="activate" 
     deactivate="deactivate" 
     modified="updated" 
     enabled="true"
     immediate="true"
     configuration-policy="require">
-	<implementation class="capstone.powermonitor.PowerMonitor"/>
+	<implementation class="capstone.peakmonitor.PeakMonitor"/>
 
    <!-- If the component is configurable through the Kura ConfigurationService, it must expose a Service. -->
-   <property name="service.pid" type="String" value="capstone.powermonitor.PowerMonitor"/>
+   <property name="service.pid" type="String" value="capstone.peakmonitor.PeakMonitor"/>
    
    <reference name="CloudService"
               policy="static"
@@ -32,6 +32,6 @@
               cardinality="1..1" 
               interface="org.eclipse.kura.cloud.CloudService"/>
    <service>
-      <provide interface="capstone.powermonitor.PowerMonitor"/>
+      <provide interface="capstone.peakmonitor.PeakMonitor"/>
    </service>
 </scr:component>

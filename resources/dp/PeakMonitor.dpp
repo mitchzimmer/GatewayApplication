@@ -1,20 +1,20 @@
 #Deployment Plugin Project File
-#Wed Mar 15 14:12:54 CDT 2017
-build.ant.name=<.>\\resources\\dp\\PowerMonitor_build.xml
-build.dp.file=<.>\\resources\\dp\\PowerMonitor.dp
+#Mon Mar 20 16:26:33 CDT 2017
+build.ant.name=<.>\\resources\\dp\\PeakMonitor_build.xml
+build.dp.file=<.>\\resources\\dp\\PeakMonitor.dp
 build.location=
 bundles.0.bundle_path=<.>/.project
 bundles.0.customizer=false
 bundles.0.headers.count=0
 bundles.0.missing=false
-bundles.0.name=bundles/capstone.powermonitor.PowerMonitor.jar
-bundles.0.symbolic_name=capstone.powermonitor.PowerMonitor;singleton\:\=true
+bundles.0.name=bundles/capstone.peakmonitor.PeakMonitor.jar
+bundles.0.symbolic_name=capstone.peakmonitor.PeakMonitor;singleton\:\=true
 bundles.0.version=1.0.2.qualifier
 bundles.count=1
 certificates.count=0
 general.signbundles=false
 headers.other.headers=
-headers.symbolic.name=PowerMonitor
+headers.symbolic.name=PeakMonitor
 headers.version=1.0.0
 resources.count=0
 
