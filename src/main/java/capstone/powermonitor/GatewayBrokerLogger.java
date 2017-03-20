@@ -1,6 +1,7 @@
 package capstone.powermonitor;
 
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.stream.XMLInputFactory;
@@ -139,56 +140,103 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		s_logger.info("Recieved MQTT -- Topic: "+ topic +" Message: " + message);   
-		
-		
-		s_logger.info("parsing xml");   
-		
-		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-		StringReader reader = new StringReader(message.toString());
-        XMLStreamReader streamReader = inputFactory.createXMLStreamReader(reader);
-        
-        //<payload>
-        //	<metrics>
-        //		<metric>
-        //			<name>Power</name>
-        //			<type>double</type>
-        //			<value>3.0347696184267443</value>
-        //		</metric>
-        //	</metrics>
-        //</payload>
-                
-        streamReader.nextTag(); // Advance to "payload" element
-        streamReader.nextTag(); // Advance to "metrics" element
-        streamReader.nextTag(); // Advance to "metric" element
-
-        int metrics = 0;
-        while (streamReader.hasNext()) {
-            if (streamReader.isStartElement()) {
-                switch (streamReader.getLocalName()) {
-                case "name": {
-                	s_logger.info("name : ");
-                	s_logger.info(streamReader.getElementText());
-                    break;
-                }
-                case "type": {
-                	s_logger.info("type : ");
-                	s_logger.info(streamReader.getElementText());
-                    break;
-                }
-                case "value": {
-                	s_logger.info("value : ");
-                	s_logger.info(streamReader.getElementText());
-                    break;
-                }
-                case "metric" : {
-                    metrics ++;
-                }
-                }
-            }
-            streamReader.next();
-        }
-        s_logger.info(metrics + " metrics");
-
+		try{		
+			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+			StringReader reader = new StringReader(message.toString());
+	        XMLStreamReader streamReader = inputFactory.createXMLStreamReader(reader);
+	        
+	        //<payload>
+	        //	<metrics>
+	        //		<metric>
+	        //			<name>Power</name>
+	        //			<type>double</type>
+	        //			<value>3.0347696184267443</value>
+	        //		</metric>
+	        //	</metrics>
+	        //</payload>
+	//        KuraPayload payload = new KuraPayload();
+	        Map<String,Object> metrics =  new HashMap<String,Object>();
+	                
+	        streamReader.nextTag(); // Advance to "payload" element
+	        streamReader.nextTag(); // Advance to "metrics" element
+	        streamReader.nextTag(); // Advance to "metric" element
+	
+	        int metricsNumber = 0;
+	       	String name = new String();
+	    	String typename = new String();
+	    	String value = new String();
+	        while (streamReader.hasNext()) {
+	        	//Checking Start of Element
+	            if (streamReader.isStartElement()) {
+	                switch (streamReader.getLocalName()) {
+		                case "name": {
+		                	name = streamReader.getElementText();
+		                    break;
+		                }
+		                case "type": {
+		                	typename = streamReader.getElementText();
+		                	break;
+		                }
+		                case "value": {
+		                	value = streamReader.getElementText();
+		                    break;
+		                }
+		                case "metric" : {
+		                	metricsNumber ++;
+		                	break;
+		                }
+	                }
+	            }
+	        	//Checking End of Element
+	            if(streamReader.isEndElement()){
+	            	switch (streamReader.getLocalName()) {
+		                case "metric" : {
+	
+		                	//Dont know a better way to do this...
+		                	//valid metric types: string, double, int, float, long, boolean, base64Binary
+		                    switch (typename) {
+		                    	case "string": {
+		                            metrics.put(name, (String)value);
+		                    		break;
+		                        }
+		                    	case "double": {
+		                            metrics.put(name, Double.parseDouble(value));
+		                            break;
+		                        }
+		                    	case "int": {
+		                            metrics.put(name, Integer.parseInt(value));
+		                    		break;
+		                        }
+		                    	case "float": {
+		                            metrics.put(name, Float.parseFloat(value));
+		                            break;
+		                        }
+		                    	case "long": {
+		                            metrics.put(name, Long.parseLong(value));
+		                            break;
+		                        }
+		                    	case "boolean": {
+		                            metrics.put(name, Boolean.parseBoolean(value));
+		                    		break;
+		                        }
+		                    	case "base64Binary": {
+		                        	//not sure here
+		                            break;
+		                    	}
+		                    }
+		                    break;
+		                }
+	            	}
+	            }
+	            streamReader.next();
+	        }
+	        
+	        s_logger.info(metricsNumber + " metrics");
+	        s_logger.info("Metrics: " + metrics.toString());
+		}
+		catch(Exception e){
+			s_logger.info(e.toString());
+		}
 	}
 
 	@Override
@@ -200,5 +248,5 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	//   Private Methods
 	//
 	// ----------------------------------------------------------------
-	
+	 
 }
