@@ -1,6 +1,7 @@
 package capstone.powermonitor;
 
 import java.io.StringReader;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
+import org.eclipse.kura.message.KuraPayload;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,7 +157,9 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	        //	</metrics>
 	        //</payload>
 	//        KuraPayload payload = new KuraPayload();
-	        Map<String,Object> metrics =  new HashMap<String,Object>();
+//	        Map<String,Object> metrics =  new HashMap<String,Object>();
+	        KuraPayload payload = new KuraPayload();
+	        payload.setTimestamp(new Date());
 	                
 	        streamReader.nextTag(); // Advance to "payload" element
 	        streamReader.nextTag(); // Advance to "metrics" element
@@ -196,27 +200,27 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 		                	//valid metric types: string, double, int, float, long, boolean, base64Binary
 		                    switch (typename) {
 		                    	case "string": {
-		                            metrics.put(name, (String)value);
+		                    		payload.addMetric(name, (String)value);
 		                    		break;
 		                        }
 		                    	case "double": {
-		                            metrics.put(name, Double.parseDouble(value));
+		                    		payload.addMetric(name, Double.parseDouble(value));
 		                            break;
 		                        }
 		                    	case "int": {
-		                            metrics.put(name, Integer.parseInt(value));
+		                    		payload.addMetric(name, Integer.parseInt(value));
 		                    		break;
 		                        }
 		                    	case "float": {
-		                            metrics.put(name, Float.parseFloat(value));
+		                    		payload.addMetric(name, Float.parseFloat(value));
 		                            break;
 		                        }
 		                    	case "long": {
-		                            metrics.put(name, Long.parseLong(value));
+		                    		payload.addMetric(name, Long.parseLong(value));
 		                            break;
 		                        }
 		                    	case "boolean": {
-		                            metrics.put(name, Boolean.parseBoolean(value));
+		                    		payload.addMetric(name, Boolean.parseBoolean(value));
 		                    		break;
 		                        }
 		                    	case "base64Binary": {
@@ -232,11 +236,13 @@ public class GatewayBrokerLogger implements ConfigurableComponent, MqttCallback 
 	        }
 	        
 	        s_logger.info(metricsNumber + " metrics");
-	        s_logger.info("Metrics: " + metrics.toString());
+	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	        
+	        
 		}
 		catch(Exception e){
 			s_logger.info(e.toString());
 		}
+		
 	}
 
 	@Override
