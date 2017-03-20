@@ -1,7 +1,7 @@
 #Deployment Plugin Project File
-#Mon Mar 20 16:26:33 CDT 2017
-build.ant.name=<.>\\resources\\dp\\PeakMonitor_build.xml
-build.dp.file=<.>\\resources\\dp\\PeakMonitor.dp
+#Mon Mar 20 16:37:08 CDT 2017
+build.ant.name=<.>/resources/dp/PeakMonitor_build.xml
+build.dp.file=<.>/resources/dp/PeakMonitor.dp
 build.location=
 bundles.0.bundle_path=<.>/.project
 bundles.0.customizer=false
