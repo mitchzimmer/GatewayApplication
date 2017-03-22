@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+    <OCD id="capstone.peakmonitor.PeakMonitor"
+         name="Peak Monitor" 
+         description="This is the peak monitor gateway application. Its configuration options will be passed down to... ">
+        
+        <Icon resource="OSGI-INF/peakmonitor.png" size="32"/>
+		
+		<AD id="logging.mqttTopic"  
+            name="logging.mqttTopic"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="gateway/#" 
+            description="Default mqtt topic to subsribe to. (Listens to devices that send XML messages on this topic)"/>
+		 
+         <AD id="publish.rate"  
+            name="publish.rate"
+            type="Integer"
+            cardinality="0" 
+            required="true"
+            default="2"
+            min="1" 
+            description="Default message publishing rate in minutes (min 1)."/>
+            
+    </OCD>
+    <Designate pid="capstone.peakmonitor.PeakMonitor">
+        <Object ocdref="capstone.peakmonitor.PeakMonitor"/>
+    </Designate>
+</MetaData>
