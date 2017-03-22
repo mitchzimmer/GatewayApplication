@@ -2,6 +2,7 @@
 *.war
 *.ear
 *.class
+*.jar
 
 # eclipse specific git ignore
 *.pydevproject
@@ -24,3 +25,13 @@ local.properties
 
 # Locally stored "Eclipse launch configurations"
 *.launch
+
+# MacOS
+.DS_Store*
+
+# IntelliJ Idea
+.idea/
+*.iml
+
+#OSGI relate items
+resources/dp/

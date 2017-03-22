@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
@@ -38,10 +36,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
-	
-	private ScheduledExecutorService    m_worker;
-	private ScheduledFuture<?>          m_handle;
-	
+		
 	// Publishing Property Names
 	private static final String   MQTT_TOPIC_PROP_NAME   = "logging.mqttTopic";
 		
@@ -61,7 +56,6 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	public PeakMonitor() 
 	{
 		super();
-		m_worker = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public void setCloudService(CloudService cloudService) {
@@ -130,9 +124,6 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	protected void deactivate(ComponentContext componentContext) 
 	{
 		s_logger.debug("Deactivating " + APP_ID + "...");
-
-		// shutting down the worker and cleaning up the properties
-		m_worker.shutdown();
 		
 		// Releasing the CloudApplicationClient
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
@@ -242,50 +233,22 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	 * Called after a new set of properties has been configured on the service
 	 */
 	private void doUpdate(boolean onUpdate) 
-	{
-		
-		// cancel a current worker handle if one if active
-		if (m_handle != null) {
-			m_handle.cancel(true);
-		}
-		
+	{	
 		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
 			s_logger.info("Update " + APP_ID + " - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
 			return;
 		}
-		
-		// schedule a new worker based on the properties of the service
-		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
-		//TODO: Add this in to only accept live data every so many minutes
-		
-//		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
-//			@Override
-//			public void run() {
-//				Thread.currentThread().setName(getClass().getSimpleName());
-//				doPublish();
-//			}
-//		}, 0, pubrate, TimeUnit.MINUTES);
 	}
 	
 	
 	/**
-	 * Called at the configured rate to publish the next temperature measurement.
+	 * Called on Paho MQTT messageArrived to publish the next KuraPayload sent to cloud.
 	 */
 	private void doPublish(String topic, MqttMessage message) 
 	{				
 		KuraPayload payload = new KuraPayload();
         payload.setTimestamp(new Date());
-        //XML EXAMPLE
-        //<payload>
-        //	<metrics>
-        //		<metric>
-        //			<name>Power</name>
-        //			<type>double</type>
-        //			<value>3.0347696184267443</value>
-        //		</metric>
-        //	</metrics>
-        //</payload>
-
+        
 		//Parsing out XML into KuraPayload
 		try{		
 			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
