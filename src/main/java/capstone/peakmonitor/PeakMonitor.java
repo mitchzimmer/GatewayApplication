@@ -36,7 +36,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
 	
-	private MqttClient 					mqttClient;
+	private MqttClient 					gatewayClient;
 	
 	private ScheduledExecutorService    m_worker;
 	private ScheduledFuture<?>          m_handle;
@@ -47,7 +47,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		
 	
 	private Map<String, Object>         	m_properties;
-	private String 							broker;
+	private String 							broker = "tcp://127.0.0.1:1883";
 	private String							gatewayBrokerTopic;
 	private HashMap<String, KuraPayload> 	latestPayloads;
 	
@@ -112,16 +112,15 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		
 		// get the mqtt GatewayBrokerClient for this application
 		gatewayBrokerTopic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
-		broker = "tcp://127.0.0.1:1883";
 		
-		s_logger.info("Connecting MqttClient for {}...", APP_ID);
+		s_logger.info("Connecting GatewayClient for {}...", APP_ID);
 		try {
-	        mqttClient = new MqttClient(broker, APP_ID);
-	        mqttClient.connect();
-	        mqttClient.setCallback(this);
+	        gatewayClient = new MqttClient(broker, APP_ID);
+	        gatewayClient.connect();
+	        gatewayClient.setCallback(this);
 	        
-			s_logger.info("subscribe mqtt client to: " + gatewayBrokerTopic);
-	        mqttClient.subscribe(gatewayBrokerTopic);
+			s_logger.info("Subscribe GatewayClient to: " + gatewayBrokerTopic);
+	        gatewayClient.subscribe(gatewayBrokerTopic);
 	    } catch (MqttException e) {
 	        e.printStackTrace();
 	    }
@@ -142,9 +141,9 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		m_cloudClient.release();
 		
 		// Releasing the GatewayBrokerClient
-		s_logger.info("Releasing MqttClient for {}...", APP_ID);
+		s_logger.info("Releasing GatewayClient for {}...", APP_ID);
 		try {
-			mqttClient.disconnect();
+			gatewayClient.disconnect();
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -159,8 +158,8 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		
 		//unsubscribe GatewayClientBroker
 		try {
-			s_logger.info("unsubscribe mqtt client from: " + gatewayBrokerTopic);
-			mqttClient.unsubscribe(gatewayBrokerTopic);
+			s_logger.info("Unsubscribe GatewayClient from: " + gatewayBrokerTopic);
+			gatewayClient.unsubscribe(gatewayBrokerTopic);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -175,8 +174,8 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		gatewayBrokerTopic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
 
 		try {
-			s_logger.info("subscribe mqtt client to: " + gatewayBrokerTopic);
-			mqttClient.subscribe(gatewayBrokerTopic);
+			s_logger.info("Subscribe GatewayClient to: " + gatewayBrokerTopic);
+			gatewayClient.subscribe(gatewayBrokerTopic);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -219,7 +218,20 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	// ----------------------------------------------------------------
 	
 	@Override
-	public void connectionLost(Throwable cause) {}
+	public void connectionLost(Throwable cause) {
+		s_logger.info("GatewayClient Connection Lost...");
+		try{
+	     gatewayClient = new MqttClient(broker, APP_ID);
+	     gatewayClient.setCallback(this);
+	     gatewayClient.connect();
+	     gatewayClient.subscribe(gatewayBrokerTopic);
+	     s_logger.info("GatewayClient Reconnected");
+
+		} catch (MqttException e) {
+			s_logger.info(e.toString());
+			this.connectionLost(null); //better way to do this
+		}
+	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken token) {}
@@ -240,7 +252,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	//   Private Methods
 	//
 	// ----------------------------------------------------------------
-
+	
 	/**
 	 * Called after a new set of properties has been configured on the service
 	 */
@@ -357,8 +369,8 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	            streamReader.next();
 	        }
 	        
-	        s_logger.info(metricsNumber + " metrics");
-	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	 
+//	        s_logger.info(metricsNumber + " metrics");
+//	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	 
 	        latestPayloads.put(topic, payload);
 		}
 		catch(Exception e){
