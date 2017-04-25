@@ -19,7 +19,7 @@
             type="Integer"
             cardinality="0" 
             required="true"
-            default="2"
+            default="5"
             min="1" 
             description="Default message publishing rate in minutes (min 1)."/>
             

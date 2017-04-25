@@ -2,10 +2,12 @@ package capstone.peakmonitor;
 
 import java.io.StringReader;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
@@ -31,20 +33,23 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	// Cloud Application identifier
 	private static final String APP_ID = "PeakMonitor";
 
-	// Publishing Property Names
-	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
-	
 	private CloudService                m_cloudService;
 	private CloudClient      			m_cloudClient;
-		
-	// Publishing Property Names
-	private static final String   MQTT_TOPIC_PROP_NAME   = "logging.mqttTopic";
-		
-	private MqttClient 					mqttClient;
 	
-	private Map<String, Object>         m_properties;
-	private String 						broker;
-	private String						gatewayBrokerTopic;
+	private MqttClient 					gatewayClient;
+	
+	private ScheduledExecutorService    m_worker;
+	private ScheduledFuture<?>          m_handle;
+	
+	// Publishing Property Names
+	private static final String   PUBLISH_RATE_PROP_NAME = "publish.rate";
+	private static final String   MQTT_TOPIC_PROP_NAME = "logging.mqttTopic";
+		
+	
+	private Map<String, Object>         	m_properties;
+	private String 							broker = "tcp://127.0.0.1:1883";
+	private String							gatewayBrokerTopic;
+	private HashMap<String, KuraPayload> 	latestPayloads;
 	
 	
 	// ----------------------------------------------------------------
@@ -56,6 +61,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	public PeakMonitor() 
 	{
 		super();
+		m_worker = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public void setCloudService(CloudService cloudService) {
@@ -83,6 +89,9 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 			s_logger.info("Activate - "+s+": "+properties.get(s));
 		}
 		
+		//create new instance of latest payloads
+		latestPayloads = new HashMap<String, KuraPayload>();
+		
 		// get the mqtt CloudApplicationClient for this application
 		try  {
 			
@@ -103,16 +112,15 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		
 		// get the mqtt GatewayBrokerClient for this application
 		gatewayBrokerTopic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
-		broker = "tcp://127.0.0.1:1883";
 		
-		s_logger.info("Connecting MqttClient for {}...", APP_ID);
+		s_logger.info("Connecting GatewayClient for {}...", APP_ID);
 		try {
-	        mqttClient = new MqttClient(broker, APP_ID);
-	        mqttClient.connect();
-	        mqttClient.setCallback(this);
+	        gatewayClient = new MqttClient(broker, APP_ID);
+	        gatewayClient.connect();
+	        gatewayClient.setCallback(this);
 	        
-			s_logger.info("subscribe mqtt client to: " + gatewayBrokerTopic);
-	        mqttClient.subscribe(gatewayBrokerTopic);
+			s_logger.info("Subscribe GatewayClient to: " + gatewayBrokerTopic);
+	        gatewayClient.subscribe(gatewayBrokerTopic);
 	    } catch (MqttException e) {
 	        e.printStackTrace();
 	    }
@@ -125,14 +133,17 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	{
 		s_logger.debug("Deactivating " + APP_ID + "...");
 		
+		// shutting down the worker and cleaning up the properties
+		m_worker.shutdown();
+		
 		// Releasing the CloudApplicationClient
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
 		m_cloudClient.release();
 		
 		// Releasing the GatewayBrokerClient
-		s_logger.info("Releasing MqttClient for {}...", APP_ID);
+		s_logger.info("Releasing GatewayClient for {}...", APP_ID);
 		try {
-			mqttClient.disconnect();
+			gatewayClient.disconnect();
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -147,8 +158,8 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		
 		//unsubscribe GatewayClientBroker
 		try {
-			s_logger.info("unsubscribe mqtt client from: " + gatewayBrokerTopic);
-			mqttClient.unsubscribe(gatewayBrokerTopic);
+			s_logger.info("Unsubscribe GatewayClient from: " + gatewayBrokerTopic);
+			gatewayClient.unsubscribe(gatewayBrokerTopic);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -163,8 +174,8 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		gatewayBrokerTopic = (String) m_properties.get(MQTT_TOPIC_PROP_NAME);
 
 		try {
-			s_logger.info("subscribe mqtt client to: " + gatewayBrokerTopic);
-			mqttClient.subscribe(gatewayBrokerTopic);
+			s_logger.info("Subscribe GatewayClient to: " + gatewayBrokerTopic);
+			gatewayClient.subscribe(gatewayBrokerTopic);
 		} catch (MqttException e) {
 			e.printStackTrace();
 		}
@@ -207,7 +218,20 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	// ----------------------------------------------------------------
 	
 	@Override
-	public void connectionLost(Throwable cause) {}
+	public void connectionLost(Throwable cause) {
+		s_logger.info("GatewayClient Connection Lost...");
+		try{
+	     gatewayClient = new MqttClient(broker, APP_ID);
+	     gatewayClient.setCallback(this);
+	     gatewayClient.connect();
+	     gatewayClient.subscribe(gatewayBrokerTopic);
+	     s_logger.info("GatewayClient Reconnected");
+
+		} catch (MqttException e) {
+			s_logger.info(e.toString());
+			this.connectionLost(null); //better way to do this
+		}
+	}
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken token) {}
@@ -220,7 +244,7 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 		// topicFragments[0] == {appSetting.topic_prefix}
 		// topicFragments[1] == {unique_id}
 		
-		doPublish(topicFragments[1], message);
+		parseMetrics(topicFragments[1], message);
 	}
 	
 	// ----------------------------------------------------------------
@@ -228,24 +252,40 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	//   Private Methods
 	//
 	// ----------------------------------------------------------------
-
+	
 	/**
 	 * Called after a new set of properties has been configured on the service
 	 */
 	private void doUpdate(boolean onUpdate) 
 	{	
+		// cancel a current worker handle if one if active
+		if (m_handle != null) {
+			m_handle.cancel(true);
+		}
+		
 		if (!m_properties.containsKey(PUBLISH_RATE_PROP_NAME)) {
 			s_logger.info("Update " + APP_ID + " - Ignore as properties do not contain PUBLISH_RATE_PROP_NAME.");
 			return;
 		}
+		
+		// schedule a new worker based on the properties of the service
+		int pubrate = (Integer) m_properties.get(PUBLISH_RATE_PROP_NAME);
+		m_handle = m_worker.scheduleAtFixedRate(new Runnable() {		
+			@Override
+			public void run() {
+				Thread.currentThread().setName(getClass().getSimpleName());
+				doPublish();
+				latestPayloads = new HashMap<String, KuraPayload>();
+			}
+		}, 0, pubrate, TimeUnit.MINUTES);
 	}
 	
 	
 	/**
 	 * Called on Paho MQTT messageArrived to publish the next KuraPayload sent to cloud.
 	 */
-	private void doPublish(String topic, MqttMessage message) 
-	{				
+	
+	private void parseMetrics(String topic, MqttMessage message){
 		KuraPayload payload = new KuraPayload();
         payload.setTimestamp(new Date());
         
@@ -329,21 +369,30 @@ public class PeakMonitor implements ConfigurableComponent, CloudClientListener, 
 	            streamReader.next();
 	        }
 	        
-	        s_logger.info(metricsNumber + " metrics");
-	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	        
+//	        s_logger.info(metricsNumber + " metrics");
+//	        s_logger.info("KuraPayload Metrics: " + payload.metrics().toString());	 
+	        latestPayloads.put(topic, payload);
 		}
 		catch(Exception e){
 			s_logger.info(e.toString());
 		}
 		
-		// Publish the message
-		try {
-			m_cloudClient.publish(topic, payload, 0, false);
-			s_logger.info("Published to {} message: {}", topic, message);
-		} 
-		catch (Exception e) {
-			s_logger.error("Cannot publish topic: "+ topic, e);
+	}
+	
+	private void doPublish() 
+	{				
+        //Publish for each topic in the HashMap & its metrics
+		for (Map.Entry<String, KuraPayload> entry : latestPayloads.entrySet()) {
+		    String topic = entry.getKey();
+		    KuraPayload payload = entry.getValue();
+
+		    try {
+				m_cloudClient.publish(topic, payload, 0, false);
+				s_logger.info("Published to {} message: {}", topic, payload);
+			} 
+			catch (Exception e) {
+				s_logger.error("Cannot publish topic: "+ topic, e);
+			}
 		}
-		
 	}
 }
