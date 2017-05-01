@@ -2,7 +2,7 @@
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
     <OCD id="capstone.peakmonitor.PeakMonitor"
          name="Peak Monitor" 
-         description="This is the peak monitor gateway application. Its configuration options will be passed down to... ">
+         description="Peak Monitor Configuration">
         
         <Icon resource="OSGI-INF/peakmonitor.png" size="32"/>
 		
